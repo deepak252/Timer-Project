@@ -1,90 +1,284 @@
-import 'dart:math';
+import 'dart:async';
+// import 'dart:js';
 
 import 'package:flutter/material.dart';
+import 'package:numberpicker/numberpicker.dart';
 
-void main()=> runApp(MyApp());
+void main() {
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "My Calculator",
-      theme: ThemeData(primarySwatch: Colors.red),
-      home: MyHomePage(),
+      title: "Timer",
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: HomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class HomePage extends StatefulWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  int hour = 0;
+  int minute = 0;
+  int second = 0;
+  String timetodisplay= "";
+  bool isstarted=true;
+  bool isstopped=true;
+  bool canceltimer=false;
+  int timeforTimer;
+  
 
-  double num1=0,num2=0;
-  String result="";
-  String operation="";
-  String textToDisplay="";
-
-  void btnClicked(String btnVal)
-  {
-    if(btnVal=='C')
-    {
-      num1=0;
-      num2=0;
-      result="";
-    }
-    else if(btnVal=='+'||btnVal=='-'||btnVal=='x'||btnVal=='/'||btnVal=='^'||btnVal=='%')
-    {
-      num1=double.parse(result);
-      operation=btnVal;
-      result="";
-    }
-    else if(btnVal=='<X>' && result.length>0)
-    {      
-      result=result.substring(0,result.length-1);
-    }
-    else if(btnVal=='='){
-      num2=double.parse(result);
-      switch(operation){
-        case '+':result=(num1+num2).toString();break;
-        case '-':result=(num1-num2).toString();break;
-        case 'x':result=(num1*num2).toString();break;
-        case '/':result=(num1/num2).toString();break;
-        case '%':result=(num1%num2).toString();break;
-        case '^':result=(pow(num1, num2)).toString();break;
+  void start(){
+    timeforTimer=hour*3600+minute*60+second;
+    Timer.periodic(Duration(seconds:1), (Timer t) {
+      if(timeforTimer<1 )
+      {
+        t.cancel();
+        hour=0;minute=0;second=0;
+        setState(() {
+            isstarted=true;
+            isstopped=true;
+        });
       }
-    }
-    else if(btnVal!='<X>' )
-    {
-      result=result+btnVal;
-    }
+      
+      else if(canceltimer)
+      {
+        t.cancel();
+        canceltimer=false;
 
+      }
+      else
+      {
+        timeforTimer--;
+        setState(() {
+           isstarted=true;
+           isstopped=false;
+        });
+      }
+      setState(() {
+        String hr,min,sec;
+        int seconds=timeforTimer;
+      
+        seconds ~/ 3600 <10 ? hr='0'+(seconds ~/ 3600).toString():hr= (seconds ~/ 3600).toString(); 
+        hour=seconds~/3600;
+        seconds%=3600;         
+        seconds ~/ 60 < 10 ? min='0'+(seconds ~/ 60).toString(): min=(seconds ~/ 60).toString(); 
+        minute=seconds~/60;
+        seconds%=60;
+        seconds  < 10  ? sec='0'+(seconds).toString(): sec=(seconds).toString(); 
+        second=seconds;
 
+        timetodisplay= "$hr : $min : $sec";
+        
+        
+      });
+     });
+  }
+
+  void stop()
+  {
     setState(() {
-      textToDisplay=result;
+      isstarted=false;
+      isstopped=true;
+      canceltimer=true;
     });
   }
 
 
-  Widget customButton(String btnVal)
-  {
-    return (
-      Expanded(
-        child: OutlineButton(
-         padding:EdgeInsets.all(25.0),
-          onPressed:()=>btnClicked(btnVal),
-          child: Text(
-            "$btnVal",
-            style: TextStyle(
-                fontSize: 25.0
-            )
+  Widget numberPickerColumn(String txt, int minval, int maxval, int setVal) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Padding(
+            padding: EdgeInsets.only(bottom: 60.0),
+            child: Text(
+              "$txt",
+            )),
+        NumberPicker(
+            value: setVal,
+            minValue: minval,
+            maxValue: maxval,
+            onChanged: (val) {
+              setState(() {
+                setVal = val;
+              });
+            }),
+      ],
+    );
+  }
 
+  Widget timer() {
+
+    
+
+    return Container(
+        child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Expanded(
+          flex: 6,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              // numberPickerColumn("HH", 0, 23, hour),
+              // numberPickerColumn("MM", 0, 59, minute),
+              // numberPickerColumn("SS", 0, 59, second),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Padding(
+                      padding: EdgeInsets.only(bottom: 20.0),
+                      child: Text(
+                        "HH",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      )
+                  ),
+                  NumberPicker(
+                      value: hour,
+                      minValue: 0,
+                      maxValue: 23,
+                      itemWidth: 60.0,
+                      onChanged: (val) {
+                        setState(() {
+                          hour = val;
+                          if(hour==0 && minute==0 && second==0) 
+                            isstarted=true;
+                          else if(isstopped)
+                           isstarted=false;
+                        });
+                      }
+                  ),
+                ],
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Padding(
+                      padding: EdgeInsets.only(bottom: 20.0),
+                      child: Text(
+                        "MM",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      )
+                  ),
+                  NumberPicker(
+                      value: minute,
+                      minValue: 0,
+                      maxValue: 59,
+                      itemWidth: 60.0,
+                      onChanged: (val) {
+                        setState(() {
+                          minute = val;
+                          // hour==0 && minute==0 && second==0 ? isstarted=true :  isstarted=false;
+                          if(hour==0 && minute==0 && second==0) 
+                            isstarted=true;
+                          else if(isstopped)
+                           isstarted=false;
+                        });
+                      }
+                  ),
+                ],
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Padding(
+                      padding: EdgeInsets.only(bottom: 20.0),
+                      child: Text(
+                        "SS",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      )
+                  ),
+                  NumberPicker(
+                      value: second,
+                      minValue: 0,
+                      maxValue: 59,
+                      itemWidth: 60.0,
+                      onChanged: (val) {
+                        setState(() {
+                          second = val;
+                          if(hour==0 && minute==0 && second==0) 
+                            isstarted=true;
+                          else if(isstopped)
+                           isstarted=false;
+                        });
+                      }
+                  ),
+                ],
+              )
+            ],
           ),
         ),
-      )
+        Expanded(
+          flex: 1,
+          child: Text(
+            timetodisplay,
+            style: TextStyle(
+              fontSize: 50,
+            ),
+          ),
+        ),
+        Expanded(
+            flex: 2,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                RaisedButton(
+                  onPressed:isstarted ? null : start ,
+                  color: Colors.green,
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
+                  child: Text(
+                    "START",
+                    style: TextStyle(
+                      fontSize: 20.0,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                RaisedButton(
+                  onPressed: isstopped ? null : stop,
+                  color: Colors.red,
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
+                  child: Text(
+                    "STOP",
+                    style: TextStyle(
+                      fontSize: 20.0,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              ],
+            )),
+      ],
+    ));
+  }
+
+  TabController tb;
+  @override
+  void initState() {
+    tb = TabController(
+      length: 2,
+      vsync: this,
     );
+    super.initState();
   }
 
   @override
@@ -92,77 +286,40 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "CALCULATOR",
-          style:TextStyle(
+          "Timer",
+          style: TextStyle(
             color: Colors.white,
-            fontSize:30.0,
-            fontFamily:"Harlow Solid Italic" ,
-          )
+          ),
         ),
-        // toolbarHeight: 80,
-      ),
-
-      body: Container(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children:<Widget> [
-
-            Container(
-              
-              alignment: Alignment.bottomRight,
-              padding:EdgeInsets.all(12),
-              child: 
-              Text(
-                "$textToDisplay",
-                style: TextStyle(
-                  fontSize: 24.0,
-                  fontWeight: FontWeight.w600,
-                ),
-
-              ),
+        centerTitle: true,
+        bottom: TabBar(
+          tabs: <Widget>[
+            Text(
+              "Timer",
+              style: TextStyle(color: Colors.white),
             ),
-            Row(
-              children: <Widget>[
-                customButton("C"),
-                customButton("^"),
-                customButton("%"),
-                customButton("/"),
-              ],
-            ),
-            Row(
-              children: <Widget>[
-                customButton("7"),
-                customButton("8"),
-                customButton("9"),
-                customButton("x"),
-              ],
-            ),
-            Row(
-              children: <Widget>[
-                customButton("4"),
-                customButton("5"),
-                customButton("6"),
-                customButton("-"),
-              ],
-            ),
-            Row(
-              children: <Widget>[
-                customButton("1"),
-                customButton("2"),
-                customButton("3"),
-                customButton("+"),
-              ],
-            ),
-            Row(
-              children: <Widget>[
-                customButton("<X>"),
-                customButton("0"),
-                customButton("."),
-                customButton("="),
-              ],
-            ),
+            Text(
+              "Stopwatch",
+              style: TextStyle(color: Colors.white),
+            )
           ],
-        )
+          labelStyle: TextStyle(
+            fontSize: 20.0,
+            fontWeight: FontWeight.w500,
+          ),
+          labelPadding: EdgeInsets.only(bottom: 10.0),
+          unselectedLabelColor: Colors.white60,
+          controller: tb,
+        ),
+      ),
+      body: TabBarView(
+        children: <Widget>[
+          timer(),
+          Text(
+            "Stopwattch",
+          )
+        ],
+        controller: tb,
       ),
     );
   }
